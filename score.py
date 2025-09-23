@@ -1,240 +1,310 @@
 import tkinter as tk
 from datetime import datetime
+import math
 
-class PadelTouchscreen7inch:
+class PadelScoreboardProfessional:
     def __init__(self, root):
         self.root = root
-        self.root.title("Padel Scoreboard - 7inch Touch")
+        self.root.title("Padel Scoreboard Professional")
         self.root.configure(bg='black')
         self.root.attributes('-fullscreen', True)
 
         # Game variables
         self.match_started = False
         self.start_time = None
+        self.current_set = 1
+        self.match_number = 1
         
-        self.green_game_points = 0
-        self.red_game_points = 0
-        self.green_games = 0
-        self.red_games = 0
+        # Tennis scoring
+        self.team1_game_points = 0  # Current game points
+        self.team2_game_points = 0
+        self.team1_games = 0        # Games won
+        self.team2_games = 0
+        self.team1_sets = 0         # Sets won
+        self.team2_sets = 0
 
-        # Get actual screen dimensions
+        # Team names - CHANGED TO WAJDI AND MALEK
+        self.team1_name = "WAJDI TEAM"
+        self.team2_name = "MALEK TEAM"
+
+        # Colors matching the image
+        self.red_color = '#e74c3c'      # Team 1 (left) - Red
+        self.blue_color = '#2c3e50'     # Team 2 (right) - Dark Blue
+        self.black_bg = '#000000'       # Background
+        self.white_text = '#ffffff'     # White text
+        self.digital_green = '#00ff00'  # Digital display green
+
+        # Get screen dimensions
         self.root.update_idletasks()
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_height = self.root.winfo_screenheight()
-        
-        print(f"Screen: {self.screen_width} x {self.screen_height}")
 
-        # Create interface optimized for 7-inch
         self.create_interface()
         self.update_timer()
 
     def create_interface(self):
-        # Calculate dimensions for 7-inch screen
-        banner_height = int(self.screen_height * 0.25)  # 25% for banner
-        button_area_height = self.screen_height - banner_height
-        button_width = self.screen_width // 2  # Exactly half each
+        # Main canvas for custom drawing
+        self.canvas = tk.Canvas(self.root, bg=self.black_bg, highlightthickness=0)
+        self.canvas.pack(fill='both', expand=True)
+        
+        # Bind canvas click events for touch
+        self.canvas.bind('<Button-1>', self.handle_touch)
+        
+        self.draw_interface()
 
-        print(f"Banner height: {banner_height}, Button area: {button_area_height}")
-        print(f"Button width: {button_width}")
+    def draw_interface(self):
+        """Draw the complete interface matching the image"""
+        self.canvas.delete("all")  # Clear canvas
+        
+        w = self.screen_width
+        h = self.screen_height
+        
+        # 1. TOP HEADER BAR
+        header_height = h * 0.15
+        self.canvas.create_rectangle(0, 0, w, header_height, fill=self.black_bg, outline="")
+        
+        # Logo and title (left)
+        self.canvas.create_text(w*0.05, header_height*0.3, text="🏓 PadelScore", 
+                               font=('Arial', int(header_height*0.25), 'bold'), 
+                               fill=self.white_text, anchor='w')
+        
+        # Timer (center top)
+        timer_text = "TAP TO START" if not self.match_started else self.get_timer_text()
+        self.canvas.create_text(w*0.5, header_height*0.2, text=timer_text, 
+                               font=('Arial', int(header_height*0.2), 'bold'), 
+                               fill='red', anchor='center')
+        
+        # Match info (right)
+        self.canvas.create_text(w*0.95, header_height*0.25, text=f"MATCH {self.match_number} / 3", 
+                               font=('Arial', int(header_height*0.15), 'bold'), 
+                               fill=self.white_text, anchor='e')
 
-        # 1. BANNER (25% of screen height)
-        self.banner = tk.Frame(self.root, bg='#34495e', height=banner_height)
-        self.banner.place(x=0, y=0, width=self.screen_width, height=banner_height)
+        # 2. DIAGONAL SPLIT DESIGN
+        main_area_y = header_height
+        main_area_height = h - header_height
         
-        # Banner layout - 3 equal columns
-        col_width = self.screen_width // 3
+        # Calculate diagonal line points
+        diagonal_start_x = w * 0.35
+        diagonal_end_x = w * 0.65
         
-        # Left column - Timer
-        timer_frame = tk.Frame(self.banner, bg='#34495e')
-        timer_frame.place(x=0, y=0, width=col_width, height=banner_height)
+        # Left side (RED) - Team 1 (WAJDI TEAM)
+        points_left = [0, main_area_y, diagonal_start_x, main_area_y, 
+                      diagonal_end_x, h, 0, h]
+        self.canvas.create_polygon(points_left, fill=self.red_color, outline="")
         
-        tk.Label(timer_frame, text="TIME", 
-                font=('Arial', 14, 'bold'), bg='#34495e', fg='#bdc3c7').pack(pady=(15, 2))
+        # Right side (BLUE) - Team 2 (MALEK TEAM)
+        points_right = [diagonal_start_x, main_area_y, w, main_area_y,
+                       w, h, diagonal_end_x, h]
+        self.canvas.create_polygon(points_right, fill=self.blue_color, outline="")
         
-        self.timer_label = tk.Label(timer_frame, text="TAP TO START", 
-                                   font=('Arial', 18, 'bold'), 
-                                   bg='#34495e', fg='white')
-        self.timer_label.pack()
+        # 3. CENTER DIAGONAL STRIP
+        strip_width = w * 0.08
+        strip_start = w*0.5 - strip_width/2
+        strip_end = w*0.5 + strip_width/2
+        
+        # Diagonal strip background
+        strip_points = [strip_start, main_area_y, strip_end, main_area_y,
+                       strip_end + strip_width*0.5, h, strip_start + strip_width*0.5, h]
+        self.canvas.create_polygon(strip_points, fill='#34495e', outline="")
+        
+        # "VS" text in center
+        self.canvas.create_text(w*0.5, main_area_y + main_area_height*0.3, text="VS", 
+                               font=('Arial', int(h*0.08), 'bold'), 
+                               fill=self.white_text, anchor='center')
+        
+        # Team indicators
+        self.canvas.create_text(w*0.5, main_area_y + main_area_height*0.7, text="Team", 
+                               font=('Arial', int(h*0.03)), 
+                               fill='red', anchor='center')
+        self.canvas.create_text(w*0.5, main_area_y + main_area_height*0.8, text="02", 
+                               font=('Arial', int(h*0.05), 'bold'), 
+                               fill='red', anchor='center')
 
-        # Center column - Global scores
-        score_frame = tk.Frame(self.banner, bg='#34495e')
-        score_frame.place(x=col_width, y=0, width=col_width, height=banner_height)
+        # 4. TEAM 1 (LEFT/RED) CONTENT - WAJDI TEAM
+        team1_center_x = w * 0.2
+        team1_center_y = main_area_y + main_area_height * 0.5
         
-        tk.Label(score_frame, text="GAMES WON", 
-                font=('Arial', 16, 'bold'), bg='#34495e', fg='#f39c12').pack(pady=(10, 5))
+        # WAJDI TEAM name
+        self.canvas.create_text(team1_center_x, main_area_y + main_area_height*0.15, 
+                               text=self.team1_name, 
+                               font=('Arial', int(h*0.05), 'bold'), 
+                               fill=self.white_text, anchor='center')
         
-        # Score container
-        score_container = tk.Frame(score_frame, bg='#34495e')
-        score_container.pack(expand=True)
+        # Team 1 current game score (large)
+        game_score_1 = self.get_display_score(self.team1_game_points, self.team2_game_points, 1)
+        self.canvas.create_text(team1_center_x, team1_center_y, text=game_score_1, 
+                               font=('Arial', int(h*0.25), 'bold'), 
+                               fill=self.white_text, anchor='center')
         
-        self.green_games_label = tk.Label(score_container, text="0", 
-                                         font=('Arial', 32, 'bold'), 
-                                         bg='#34495e', fg='#27ae60')
-        self.green_games_label.pack(side='left', padx=15)
-        
-        tk.Label(score_container, text="-", 
-                font=('Arial', 32, 'bold'), 
-                bg='#34495e', fg='white').pack(side='left', padx=8)
-        
-        self.red_games_label = tk.Label(score_container, text="0", 
-                                       font=('Arial', 32, 'bold'), 
-                                       bg='#34495e', fg='#e74c3c')
-        self.red_games_label.pack(side='left', padx=15)
+        # Team 1 games/sets (bottom)
+        self.canvas.create_text(team1_center_x*0.3, main_area_y + main_area_height*0.85, 
+                               text=str(self.team1_sets), 
+                               font=('Arial', int(h*0.06), 'bold'), 
+                               fill=self.white_text, anchor='center')
+        self.canvas.create_text(team1_center_x*0.6, main_area_y + main_area_height*0.85, 
+                               text=str(self.team1_games), 
+                               font=('Arial', int(h*0.06), 'bold'), 
+                               fill=self.white_text, anchor='center')
+        self.canvas.create_text(team1_center_x*0.9, main_area_y + main_area_height*0.85, 
+                               text="- -", 
+                               font=('Arial', int(h*0.06), 'bold'), 
+                               fill=self.white_text, anchor='center')
 
-        # Right column - Reset button
-        reset_frame = tk.Frame(self.banner, bg='#34495e')
-        reset_frame.place(x=col_width * 2, y=0, width=col_width, height=banner_height)
+        # 5. TEAM 2 (RIGHT/BLUE) CONTENT - MALEK TEAM
+        team2_center_x = w * 0.8
+        team2_center_y = main_area_y + main_area_height * 0.5
         
-        self.reset_button = tk.Button(reset_frame, text="RESET", 
-                                     font=('Arial', 16, 'bold'),
-                                     bg='#e67e22', fg='white',
-                                     activebackground='#d35400',
-                                     relief='flat', bd=0,
-                                     command=self.reset_match)
-        self.reset_button.place(relx=0.5, rely=0.5, anchor='center', 
-                               width=80, height=40)
+        # MALEK TEAM name
+        self.canvas.create_text(team2_center_x, main_area_y + main_area_height*0.15, 
+                               text=self.team2_name, 
+                               font=('Arial', int(h*0.05), 'bold'), 
+                               fill=self.white_text, anchor='center')
+        
+        # Team 2 current game score (large)
+        game_score_2 = self.get_display_score(self.team1_game_points, self.team2_game_points, 2)
+        self.canvas.create_text(team2_center_x, team2_center_y, text=game_score_2, 
+                               font=('Arial', int(h*0.25), 'bold'), 
+                               fill=self.white_text, anchor='center')
+        
+        # Team 2 games/sets (bottom)
+        self.canvas.create_text(team2_center_x*1.25, main_area_y + main_area_height*0.85, 
+                               text=str(self.team2_sets), 
+                               font=('Arial', int(h*0.06), 'bold'), 
+                               fill=self.white_text, anchor='center')
+        self.canvas.create_text(team2_center_x*1.15, main_area_y + main_area_height*0.85, 
+                               text=str(self.team2_games), 
+                               font=('Arial', int(h*0.06), 'bold'), 
+                               fill=self.white_text, anchor='center')
+        self.canvas.create_text(team2_center_x*1.05, main_area_y + main_area_height*0.85, 
+                               text="- -", 
+                               font=('Arial', int(h*0.06), 'bold'), 
+                               fill=self.white_text, anchor='center')
 
-        # 2. LEFT BUTTON (GREEN) - EXACT POSITIONING
-        self.green_button = tk.Button(
-            self.root,
-            text="GREEN TEAM\n\n0",
-            font=('Arial', 42, 'bold'),
-            bg='#27ae60',
-            fg='white',
-            activebackground='#2ecc71',
-            relief='flat',
-            bd=0,
-            command=self.green_scores
-        )
-        self.green_button.place(x=0, y=banner_height, 
-                               width=button_width, height=button_area_height)
+        # 6. RESET BUTTON (small, top right)
+        reset_x = w * 0.95
+        reset_y = header_height * 0.7
+        reset_button_rect = self.canvas.create_rectangle(reset_x-40, reset_y-15, reset_x+40, reset_y+15, 
+                                                       fill='#e67e22', outline="", tags="reset_button")
+        reset_button_text = self.canvas.create_text(reset_x, reset_y, text="RESET", 
+                                                  font=('Arial', 12, 'bold'), 
+                                                  fill=self.white_text, anchor='center', tags="reset_button")
+        
+        # Bind reset button click
+        self.canvas.tag_bind("reset_button", "<Button-1>", self.reset_match)
 
-        # 3. RIGHT BUTTON (RED) - EXACT POSITIONING  
-        self.red_button = tk.Button(
-            self.root,
-            text="RED TEAM\n\n0",
-            font=('Arial', 42, 'bold'),
-            bg='#e74c3c',
-            fg='white',
-            activebackground='#ff5733',
-            relief='flat',
-            bd=0,
-            command=self.red_scores
-        )
-        self.red_button.place(x=button_width, y=banner_height, 
-                             width=button_width, height=button_area_height)
+    def handle_touch(self, event):
+        """Handle touch events"""
+        # Check if reset button was clicked first
+        if self.canvas.find_overlapping(event.x-1, event.y-1, event.x+1, event.y+1):
+            overlapping = self.canvas.find_overlapping(event.x-1, event.y-1, event.x+1, event.y+1)
+            for item in overlapping:
+                if "reset_button" in self.canvas.gettags(item):
+                    return  # Reset button handles its own click
+        
+        if not self.match_started:
+            self.start_match()
+            return
+        
+        # Determine which side was touched
+        if event.x < self.screen_width / 2:
+            self.team1_scores()
+            print("WAJDI TEAM scores!")
+        else:
+            self.team2_scores()
+            print("MALEK TEAM scores!")
 
-    def points_to_display(self, points):
-        """Convert tennis points to display"""
+    def get_display_score(self, team1_points, team2_points, team):
+        """Get display score for tennis scoring"""
         point_map = {0: "0", 1: "15", 2: "30", 3: "40"}
-        return point_map.get(points, str(points))
+        
+        if team1_points >= 3 and team2_points >= 3:
+            if team1_points == team2_points:
+                return "40"  # Deuce shows as 40-40
+            elif team == 1:
+                return "AD" if team1_points > team2_points else "40"
+            else:
+                return "AD" if team2_points > team1_points else "40"
+        else:
+            if team == 1:
+                return point_map.get(team1_points, str(team1_points))
+            else:
+                return point_map.get(team2_points, str(team2_points))
 
-    def green_scores(self):
-        """Green team scores"""
-        if not self.match_started:
-            self.start_match()
-            return
-            
-        self.green_game_points += 1
+    def team1_scores(self):
+        """WAJDI TEAM scores a point"""
+        self.team1_game_points += 1
         self.check_game_winner()
-        self.update_display()
+        self.draw_interface()
 
-    def red_scores(self):
-        """Red team scores"""
-        if not self.match_started:
-            self.start_match()
-            return
-            
-        self.red_game_points += 1
+    def team2_scores(self):
+        """MALEK TEAM scores a point"""
+        self.team2_game_points += 1
         self.check_game_winner()
-        self.update_display()
+        self.draw_interface()
 
     def check_game_winner(self):
-        """Tennis scoring rules"""
-        green_points = self.green_game_points
-        red_points = self.red_game_points
-        
-        if green_points >= 3 and red_points >= 3:
-            if abs(green_points - red_points) >= 2:
-                if green_points > red_points:
-                    self.green_wins_game()
+        """Check for game winner"""
+        if self.team1_game_points >= 3 and self.team2_game_points >= 3:
+            if abs(self.team1_game_points - self.team2_game_points) >= 2:
+                if self.team1_game_points > self.team2_game_points:
+                    self.team1_games += 1
+                    print("WAJDI TEAM wins game!")
                 else:
-                    self.red_wins_game()
-        elif green_points >= 4 and red_points < 3:
-            self.green_wins_game()
-        elif red_points >= 4 and green_points < 3:
-            self.red_wins_game()
+                    self.team2_games += 1
+                    print("MALEK TEAM wins game!")
+                self.reset_game()
+        elif self.team1_game_points >= 4 and self.team2_game_points < 3:
+            self.team1_games += 1
+            print("WAJDI TEAM wins game!")
+            self.reset_game()
+        elif self.team2_game_points >= 4 and self.team1_game_points < 3:
+            self.team2_games += 1
+            print("MALEK TEAM wins game!")
+            self.reset_game()
 
-    def green_wins_game(self):
-        """Green wins game"""
-        self.green_games += 1
-        self.reset_current_game()
-
-    def red_wins_game(self):
-        """Red wins game"""
-        self.red_games += 1
-        self.reset_current_game()
-
-    def reset_current_game(self):
+    def reset_game(self):
         """Reset current game points"""
-        self.green_game_points = 0
-        self.red_game_points = 0
-
-    def update_display(self):
-        """Update all displays"""
-        # Handle deuce/advantage
-        if self.green_game_points >= 3 and self.red_game_points >= 3:
-            if self.green_game_points == self.red_game_points:
-                green_display = "DEUCE"
-                red_display = "DEUCE"
-            elif self.green_game_points > self.red_game_points:
-                green_display = "ADV"
-                red_display = "40"
-            else:
-                green_display = "40"
-                red_display = "ADV"
-        else:
-            green_display = self.points_to_display(self.green_game_points)
-            red_display = self.points_to_display(self.red_game_points)
-
-        # Update buttons
-        self.green_button.config(text=f"GREEN TEAM\n\n{green_display}")
-        self.red_button.config(text=f"RED TEAM\n\n{red_display}")
-        
-        # Update global scores
-        self.green_games_label.config(text=str(self.green_games))
-        self.red_games_label.config(text=str(self.red_games))
+        self.team1_game_points = 0
+        self.team2_game_points = 0
 
     def start_match(self):
         """Start match"""
         self.match_started = True
         self.start_time = datetime.now()
-        self.timer_label.config(text="00:00")
+        self.draw_interface()
+        print("Match started between WAJDI TEAM vs MALEK TEAM!")
 
-    def reset_match(self):
-        """Reset everything"""
-        self.green_game_points = 0
-        self.red_game_points = 0
-        self.green_games = 0
-        self.red_games = 0
+    def reset_match(self, event=None):
+        """Reset entire match"""
+        self.team1_game_points = 0
+        self.team2_game_points = 0
+        self.team1_games = 0
+        self.team2_games = 0
+        self.team1_sets = 0
+        self.team2_sets = 0
         self.match_started = False
-        self.timer_label.config(text="TAP TO START")
         self.start_time = None
-        self.update_display()
+        self.draw_interface()
+        print("Match reset! WAJDI TEAM vs MALEK TEAM ready to start.")
 
-    def update_timer(self):
-        """Update timer"""
-        if self.match_started and self.start_time:
+    def get_timer_text(self):
+        """Get formatted timer text"""
+        if self.start_time:
             elapsed = (datetime.now() - self.start_time).total_seconds()
             mins = int(elapsed // 60)
             secs = int(elapsed % 60)
-            self.timer_label.config(text=f"{mins:02d}:{secs:02d}")
-        
-        self.root.after(1000, self.update_timer)
+            return f"{mins:02d}:{secs:02d}"
+        return "00:00"
+
+    def update_timer(self):
+        """Update timer display"""
+        if self.match_started:
+            self.draw_interface()
+        self.root.after(5000, self.update_timer)  # Update every 5 seconds
 
 def main():
     root = tk.Tk()
-    app = PadelTouchscreen7inch(root)
+    app = PadelScoreboardProfessional(root)
     root.bind('<Escape>', lambda e: root.quit())
     root.mainloop()
 
