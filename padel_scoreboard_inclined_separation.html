@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padel Scoreboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton:wght@400&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Anton', Arial, sans-serif;
+            font-style: italic;
+            background-image: url('back.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* REMOVED DARK OVERLAY - background now fully visible */
+
+        .scoreboard {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header - BANNER UNAFFECTED */
+        .header {
+            background: linear-gradient(90deg, #d4af37 0%, #b8860b 100%);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            position: relative;
+            z-index: 30;
+        }
+
+        .tournament-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .tournament-title {
+            color: #000;
+            font-weight: 400;
+            font-size: 18px;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Clock centered absolutely */
+        .time-display {
+            color: #000;
+            font-weight: 400;
+            font-size: 32px;
+            font-style: italic;
+            letter-spacing: 2px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .live-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff0000;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .live-text {
+            color: #000;
+            font-weight: 400;
+            font-size: 16px;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .altos-logo {
+            position: absolute;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d4af37;
+            font-weight: 400;
+            font-size: 16px;
+            font-style: italic;
+        }
+
+        /* Main Scoreboard - BACKGROUND FULLY VISIBLE */
+        .main-scoreboard {
+            flex: 1;
+            display: flex;
+            position: relative;
+            transform: skewX(-45deg);
+            transform-origin: center;
+        }
+
+        /* Team Sections - MUCH MORE TRANSPARENT TO SHOW BACKGROUND */
+        .team-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transform: skewX(45deg);
+        }
+
+        .black-team {
+            background: linear-gradient(135deg, rgba(44, 44, 44, 0.2) 0%, rgba(26, 26, 26, 0.2) 100%);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .black-team:hover {
+            background: linear-gradient(135deg, rgba(60, 60, 60, 0.3) 0%, rgba(42, 42, 42, 0.3) 100%);
+        }
+        .black-team:active {
+            background: linear-gradient(135deg, rgba(76, 76, 76, 0.4) 0%, rgba(58, 58, 58, 0.4) 100%);
+            transform: skewX(45deg) scale(0.98);
+        }
+
+        .yellow-team {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 134, 11, 0.2) 100%);
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .yellow-team:hover {
+            background: linear-gradient(135deg, rgba(228, 191, 71, 0.3) 0%, rgba(200, 150, 11, 0.3) 100%);
+        }
+        .yellow-team:active {
+            background: linear-gradient(135deg, rgba(244, 207, 87, 0.4) 0%, rgba(216, 166, 11, 0.4) 100%);
+            transform: skewX(45deg) scale(0.98);
+        }
+
+        .team-header {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 60px;
+            position: relative;
+        }
+
+        .team-label {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(212, 175, 55, 0.95);
+            padding: 15px 40px;
+            clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 100%, 0 100%);
+            min-width: 250px;
+            backdrop-filter: blur(3px);
+        }
+        .yellow-team .team-label {
+            background: rgba(44, 44, 44, 0.95);
+            clip-path: polygon(30px 0, 100% 0, 100% 100%, 0 100%);
+            flex-direction: row-reverse;
+            backdrop-filter: blur(3px);
+        }
+        .team-name {
+            color: #000;
+            font-weight: 400;
+            font-size: 28px;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .yellow-team .team-name { color: #d4af37; }
+        .team-circle { width: 30px; height: 30px; border-radius: 50%; }
+        .black-circle { background: #000; }
+        .yellow-circle { background: #d4af37; }
+
+        /* Score Display - ENHANCED VISIBILITY */
+        .score-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 40px;
+        }
+        .score-main {
+            color: #fff;
+            font-weight: 400;
+            font-size: 280px;
+            font-style: italic;
+            line-height: 1;
+            text-align: center;
+            text-shadow: 
+                0 0 20px rgba(0, 0, 0, 1),
+                0 0 40px rgba(0, 0, 0, 0.8),
+                0 0 60px rgba(0, 0, 0, 0.6),
+                2px 2px 4px rgba(0, 0, 0, 1);
+        }
+
+        /* VS Divider - MORE TRANSPARENT */
+        .vs-divider {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) skewX(45deg);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.9) 0%, rgba(184, 134, 11, 0.9) 100%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        .vs-text { 
+            color: #000; 
+            font-weight: 400; 
+            font-size: 36px; 
+            font-style: italic; 
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Red Score Board - MORE TRANSPARENT */
+        .game-score {
+            position: fixed;
+            left: 50%;
+            bottom: 60px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 15px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 0, 0, 0.9);
+            z-index: 20;
+        }
+
+        .game-label {
+            color: #ff0000;
+            font-weight: 400;
+            font-size: 14px;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .game-scores {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .game-score-number {
+            color: #ff0000;
+            font-weight: 400;
+            font-size: 36px;
+            font-style: italic;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Click Feedback - ENHANCED VISIBILITY */
+        .click-feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            font-weight: 400;
+            opacity: 0;
+            animation: fadeInOut 0.6s ease-in-out;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .black-team .click-feedback { 
+            color: #d4af37; 
+            text-shadow: 
+                0 0 20px rgba(0, 0, 0, 1),
+                0 0 40px rgba(0, 0, 0, 0.8);
+        }
+        .yellow-team .click-feedback { 
+            color: #000; 
+            text-shadow: 
+                0 0 20px rgba(255, 255, 255, 1),
+                0 0 40px rgba(255, 255, 255, 0.8);
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .score-main {
+                font-size: 200px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .header {
+                height: 60px;
+                padding: 0 20px;
+            }
+            .time-display {
+                font-size: 24px;
+            }
+            .score-main {
+                font-size: 150px;
+            }
+            .vs-divider {
+                width: 80px;
+                height: 80px;
+            }
+            .vs-text {
+                font-size: 24px;
+            }
+            .game-score {
+                bottom: 40px;
+                padding: 10px 20px;
+            }
+            .game-score-number {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scoreboard">
+        <!-- Header - BANNER UNAFFECTED BY BACKGROUND -->
+        <div class="header">
+            <div class="tournament-info">
+                <div class="tournament-title">ALMUS SCORE COUNTING X AREMAGYM</div>
+            </div>
+            <div class="time-display" id="timeDisplay">19H22</div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <div class="live-text">LIVE</div>
+            </div>
+            <div class="altos-logo">A</div>
+        </div>
+
+        <!-- Main Scoreboard - BACKGROUND FULLY VISIBLE -->
+        <div class="main-scoreboard">
+            <!-- Black Team -->
+            <div class="team-section black-team" onclick="addPoint('black')">
+                <div class="team-header">
+                    <div class="team-label">
+                        <div class="team-name">BLACK TEAM</div>
+                        <div class="team-circle black-circle"></div>
+                    </div>
+                </div>
+                <div class="score-container">
+                    <div class="score-main" id="score1">0</div>
+                </div>
+            </div>
+
+            <!-- Yellow Team -->
+            <div class="team-section yellow-team" onclick="addPoint('yellow')">
+                <div class="team-header">
+                    <div class="team-label">
+                        <div class="team-name">YELLOW TEAM</div>
+                        <div class="team-circle yellow-circle"></div>
+                    </div>
+                </div>
+                <div class="score-container">
+                    <div class="score-main" id="score2">0</div>
+                </div>
+            </div>
+
+            <!-- VS Divider -->
+            <div class="vs-divider">
+                <div class="vs-text">VS</div>
+            </div>
+        </div>
+
+        <!-- Red Game Score -->
+        <div class="game-score">
+            <div class="game-label">GAMES</div>
+            <div class="game-scores">
+                <div class="game-score-number" id="games1">0</div>
+                <div class="game-score-number" id="games2">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let score_1 = 0;
+        let score_2 = 0;
+        let games_1 = 0;
+        let games_2 = 0;
+        let time = "19H22";
+
+        // Update display
+        function updateScoreboard() {
+            document.getElementById('score1').textContent = score_1;
+            document.getElementById('score2').textContent = score_2;
+            document.getElementById('games1').textContent = games_1;
+            document.getElementById('games2').textContent = games_2;
+            document.getElementById('timeDisplay').textContent = time;
+        }
+
+        // Show click feedback
+        function showClickFeedback(team) {
+            const teamElement = document.querySelector(`.${team}-team`);
+            const feedback = document.createElement('div');
+            feedback.className = 'click-feedback';
+            feedback.textContent = '+1';
+            teamElement.appendChild(feedback);
+
+            setTimeout(() => {
+                teamElement.removeChild(feedback);
+            }, 600);
+        }
+
+        // Add point function
+        function addPoint(team) {
+            showClickFeedback(team);
+
+            if (team === 'black') {
+                score_1 = nextTennisScore(score_1);
+                if (score_1 === 0) {
+                    games_1++;
+                    score_2 = 0;
+                }
+            } else if (team === 'yellow') {
+                score_2 = nextTennisScore(score_2);
+                if (score_2 === 0) {
+                    games_2++;
+                    score_1 = 0;
+                }
+            }
+            updateScoreboard();
+        }
+
+        // Tennis scoring
+        function nextTennisScore(current) {
+            switch(current) {
+                case 0: return 15;
+                case 15: return 30;
+                case 30: return 40;
+                case 40: return 0;
+                default: return 0;
+            }
+        }
+
+        // Initialize
+        updateScoreboard();
+
+        // Auto-update time
+        setInterval(() => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            time = `${hours}H${minutes}`;
+            updateScoreboard();
+        }, 60000);
+    </script>
+</body>
+</html>
