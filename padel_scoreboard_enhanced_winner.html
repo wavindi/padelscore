@@ -397,7 +397,7 @@
             transition: all 0.3s ease;
         }
 
-        /* ENHANCED: Bigger and Better Winner Display */
+        /* CLEANED: Winner Display with proper match data only */
         .winner-display {
             position: fixed;
             top: 50%;
@@ -822,15 +822,15 @@
             </div>
         </div>
 
-        <!-- ENHANCED: Bigger and Better Winner Display -->
+        <!-- CLEANED: Winner Display with actual match data only -->
         <div class="winner-display" id="winnerDisplay">
             <div class="winner-trophy">🏆</div>
             <div class="winner-title">CHAMPION</div>
             <div class="winner-team" id="winnerTeam">BLACK TEAM</div>
 
             <div class="winner-details">
-                <div class="winner-score" id="winnerScore">Won 2-1 (6-4, 4-6, 6-3)</div>
-                <div class="winner-stats" id="winnerStats">Match Duration: 45 minutes<br>Total Points: 28</div>
+                <div class="winner-score" id="winnerScore">Won 0-2</div>
+                <div class="winner-stats" id="winnerStats">Match completed</div>
             </div>
 
             <div class="winner-buttons">
@@ -944,7 +944,7 @@
             }, 800);
         }
 
-        // ENHANCED: Show bigger and better winner display
+        // CLEANED: Show winner display with only actual match data
         function showWinner(winner) {
             const winnerDisplay = document.getElementById('winnerDisplay');
             const winnerTeam = document.getElementById('winnerTeam');
@@ -952,12 +952,12 @@
             const winnerStats = document.getElementById('winnerStats');
 
             winnerTeam.textContent = winner.team_name;
-            winnerScore.textContent = `Won ${winner.final_sets} (${winner.match_summary})`;
 
-            // Enhanced stats display
-            const duration = winner.match_duration || 'Unknown';
-            const totalPoints = (score_1 === 0 && score_2 === 0) ? 'Match completed' : `Points: ${score_1}-${score_2}`;
-            winnerStats.innerHTML = `Match Duration: ${duration}<br>${totalPoints}`;
+            // Clean winner score display - just show the sets score
+            winnerScore.textContent = `Won ${winner.final_sets}`;
+
+            // Clean stats display - just show "Match completed"
+            winnerStats.textContent = 'Match completed';
 
             winnerDisplay.style.display = 'flex';
             matchWon = true;
@@ -969,11 +969,11 @@
             resetMatch();
         }
 
-        // NEW: Share result function
+        // CLEANED: Share result function with clean text
         function shareResult() {
             if (!winnerData) return;
 
-            const shareText = `🏆 ${winnerData.team_name} wins! Final score: ${winnerData.final_sets} - Padel Championship`;
+            const shareText = `🏆 ${winnerData.team_name} wins! Final score: ${winnerData.final_sets}`;
 
             if (navigator.share) {
                 navigator.share({
@@ -1009,8 +1009,7 @@
                         </head>
                         <body>
                         <div class="header">
-                            <h1>Padel Match History</h1>
-                            <p>Duration: ${data.match_info.duration || 'In progress'}</p>
+                            <h1>Match History</h1>
                             ${data.match_info.winner ? `<p>Winner: ${data.match_info.winner.team_name}</p>` : ''}
                         </div>
                         <div class="stats">
@@ -1131,14 +1130,13 @@
             }
         }
 
-        // Check if match is won (local mode)
+        // CLEANED: Check if match is won with clean winner data
         function checkMatchWin(team) {
             if ((team === 'black' && sets_1 >= 2) || (team === 'yellow' && sets_2 >= 2)) {
                 const winner = {
                     team_name: team === 'black' ? 'BLACK TEAM' : 'YELLOW TEAM',
                     final_sets: `${sets_1}-${sets_2}`,
-                    match_summary: 'Match completed locally',
-                    match_duration: 'Local match'
+                    match_summary: 'Match completed'
                 };
                 winnerData = winner;
                 showWinner(winner);
