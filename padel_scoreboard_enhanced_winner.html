@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padel Scoreboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton:wght@400&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Anton', Arial, sans-serif;
+            font-style: italic;
+            background-image: url('back.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow: hidden;
+            height: 100vh;
+            background-color: #1a1a1a;
+        }
+
+        .scoreboard {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, #d4af37 0%, #b8860b 100%);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            position: relative;
+            z-index: 30;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .tournament-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .tournament-title {
+            color: #000;
+            font-weight: 400;
+            font-size: 18px;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .time-display {
+            color: #000;
+            font-weight: 400;
+            font-size: 32px;
+            font-style: italic;
+            letter-spacing: 2px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-right: 20px;
+        }
+
+        .live-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff0000;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .live-text {
+            color: #000;
+            font-weight: 400;
+            font-size: 16px;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Logo Container */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 8px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo-fallback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d4af37;
+            font-weight: 400;
+            font-size: 20px;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo.no-image .logo-fallback {
+            opacity: 1;
+        }
+
+        .logo.no-image .logo-img {
+            opacity: 0;
+        }
+
+        .logo:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .logo:active {
+            transform: scale(0.95);
+        }
+
+        .logo-text {
+            color: #000;
+            font-weight: 400;
+            font-size: 14px;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+
+        /* Main Scoreboard */
+        .main-scoreboard {
+            flex: 1;
+            display: flex;
+            position: relative;
+            transform: skewX(-45deg);
+            transform-origin: center;
+        }
+
+        /* Team Sections */
+        .team-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transform: skewX(45deg);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .black-team {
+            background: linear-gradient(135deg, rgba(44, 44, 44, 0.25) 0%, rgba(26, 26, 26, 0.25) 100%);
+            border-right: 2px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .black-team:hover {
+            background: linear-gradient(135deg, rgba(60, 60, 60, 0.35) 0%, rgba(42, 42, 42, 0.35) 100%);
+            transform: skewX(45deg) scale(1.02);
+        }
+        .black-team:active {
+            background: linear-gradient(135deg, rgba(76, 76, 76, 0.45) 0%, rgba(58, 58, 58, 0.45) 100%);
+            transform: skewX(45deg) scale(0.98);
+        }
+
+        .yellow-team {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(184, 134, 11, 0.25) 100%);
+            border-left: 2px solid rgba(44, 44, 44, 0.3);
+        }
+        .yellow-team:hover {
+            background: linear-gradient(135deg, rgba(228, 191, 71, 0.35) 0%, rgba(200, 150, 11, 0.35) 100%);
+            transform: skewX(45deg) scale(1.02);
+        }
+        .yellow-team:active {
+            background: linear-gradient(135deg, rgba(244, 207, 87, 0.45) 0%, rgba(216, 166, 11, 0.45) 100%);
+            transform: skewX(45deg) scale(0.98);
+        }
+
+        .team-header {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 60px;
+            position: relative;
+        }
+
+        .team-label {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(212, 175, 55, 0.9);
+            padding: 15px 40px;
+            clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 100%, 0 100%);
+            min-width: 250px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .yellow-team .team-label {
+            background: rgba(44, 44, 44, 0.9);
+            clip-path: polygon(30px 0, 100% 0, 100% 100%, 0 100%);
+            flex-direction: row-reverse;
+            backdrop-filter: blur(5px);
+        }
+        .team-name {
+            color: #000;
+            font-weight: 400;
+            font-size: 28px;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .yellow-team .team-name { color: #d4af37; }
+        .team-circle { 
+            width: 30px; 
+            height: 30px; 
+            border-radius: 50%; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .black-circle { background: #000; }
+        .yellow-circle { background: #d4af37; }
+
+        /* Score Display with Games */
+        .score-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 40px;
+            gap: 20px;
+        }
+
+        .score-main {
+            color: #fff;
+            font-weight: 400;
+            font-size: clamp(120px, 15vw, 280px);
+            font-style: italic;
+            line-height: 1;
+            text-align: center;
+            text-shadow: 
+                0 0 30px rgba(0, 0, 0, 1),
+                0 0 60px rgba(0, 0, 0, 0.9),
+                0 0 90px rgba(0, 0, 0, 0.7),
+                3px 3px 6px rgba(0, 0, 0, 1);
+            transition: all 0.3s ease;
+        }
+
+        /* Team Games Score */
+        .team-games {
+            color: #d4af37;
+            font-weight: 400;
+            font-size: clamp(40px, 5vw, 80px);
+            font-style: italic;
+            line-height: 1;
+            text-align: center;
+            text-shadow: 
+                0 0 20px rgba(0, 0, 0, 1),
+                0 0 40px rgba(0, 0, 0, 0.8),
+                2px 2px 4px rgba(0, 0, 0, 1);
+            transition: all 0.3s ease;
+        }
+
+        .yellow-team .team-games {
+            color: #fff;
+        }
+
+        /* VS Divider */
+        .vs-divider {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) skewX(45deg);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.95) 0%, rgba(184, 134, 11, 0.95) 100%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(0, 0, 0, 0.3);
+        }
+        .vs-text { 
+            color: #000; 
+            font-weight: 400; 
+            font-size: 36px; 
+            font-style: italic; 
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Sets Score Panel - RED */
+        .sets-score {
+            position: fixed;
+            left: 50%;
+            bottom: 60px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 20px;
+            padding: 20px 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(15px);
+            border: 3px solid rgba(255, 0, 0, 0.8);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            z-index: 20;
+        }
+
+        .sets-label {
+            color: #ff0000;
+            font-weight: 400;
+            font-size: 16px;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+        }
+
+        .sets-scores {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .sets-score-number {
+            color: #ff0000;
+            font-weight: 400;
+            font-size: 40px;
+            font-style: italic;
+            text-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        /* ENHANCED: Bigger and Better Winner Display */
+        .winner-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 20, 20, 0.98) 100%);
+            border-radius: 40px;
+            padding: 60px 80px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 35px;
+            backdrop-filter: blur(25px);
+            border: 6px solid rgba(212, 175, 55, 0.9);
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.9),
+                0 0 100px rgba(212, 175, 55, 0.3),
+                inset 0 0 50px rgba(212, 175, 55, 0.1);
+            z-index: 100;
+            animation: winnerAppear 1.2s ease-out;
+            min-width: 600px;
+            max-width: 90vw;
+        }
+
+        @keyframes winnerAppear {
+            0% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.3) rotate(-10deg); 
+            }
+            60% { 
+                opacity: 0.8; 
+                transform: translate(-50%, -50%) scale(1.05) rotate(2deg); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1) rotate(0deg); 
+            }
+        }
+
+        /* Trophy Icon */
+        .winner-trophy {
+            font-size: 120px;
+            animation: trophyBounce 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.8));
+        }
+
+        @keyframes trophyBounce {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        .winner-title {
+            color: #d4af37;
+            font-weight: 400;
+            font-size: clamp(36px, 6vw, 72px);
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 
+                0 0 40px rgba(212, 175, 55, 0.8),
+                0 0 80px rgba(212, 175, 55, 0.6),
+                0 4px 8px rgba(0, 0, 0, 0.8);
+            animation: glow 2.5s ease-in-out infinite alternate;
+            text-align: center;
+        }
+
+        @keyframes glow {
+            from { 
+                text-shadow: 
+                    0 0 40px rgba(212, 175, 55, 0.8),
+                    0 0 80px rgba(212, 175, 55, 0.6),
+                    0 4px 8px rgba(0, 0, 0, 0.8);
+            }
+            to { 
+                text-shadow: 
+                    0 0 60px rgba(212, 175, 55, 1),
+                    0 0 120px rgba(212, 175, 55, 0.8),
+                    0 6px 12px rgba(0, 0, 0, 0.9);
+            }
+        }
+
+        .winner-team {
+            color: #fff;
+            font-weight: 400;
+            font-size: clamp(28px, 5vw, 56px);
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 
+                0 0 30px rgba(255, 255, 255, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            background: linear-gradient(45deg, #fff 0%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .winner-details {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 25px;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            backdrop-filter: blur(10px);
+            min-width: 400px;
+        }
+
+        .winner-score {
+            color: #d4af37;
+            font-weight: 400;
+            font-size: clamp(20px, 3vw, 36px);
+            font-style: italic;
+            letter-spacing: 2px;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        .winner-stats {
+            color: #ccc;
+            font-weight: 400;
+            font-size: clamp(16px, 2vw, 24px);
+            font-style: italic;
+            text-align: center;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .winner-buttons {
+            display: flex;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .close-winner {
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 18px 35px;
+            color: #000;
+            font-family: 'Anton', Arial, sans-serif;
+            font-size: clamp(14px, 2vw, 20px);
+            font-style: italic;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .close-winner:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6);
+            background: linear-gradient(135deg, #f0c940 0%, #d4af37 100%);
+        }
+
+        .close-winner:active {
+            transform: scale(0.98);
+        }
+
+        .share-winner {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+            border: 2px solid rgba(212, 175, 55, 0.6);
+            border-radius: 20px;
+            padding: 18px 35px;
+            color: #d4af37;
+            font-family: 'Anton', Arial, sans-serif;
+            font-size: clamp(14px, 2vw, 20px);
+            font-style: italic;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            backdrop-filter: blur(10px);
+        }
+
+        .share-winner:hover {
+            transform: scale(1.05) translateY(-2px);
+            border-color: rgba(212, 175, 55, 1);
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Click Feedback */
+        .click-feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            font-weight: 400;
+            opacity: 0;
+            animation: feedbackPulse 0.8s ease-in-out;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .black-team .click-feedback { 
+            color: #d4af37; 
+            text-shadow: 
+                0 0 30px rgba(0, 0, 0, 1),
+                0 0 60px rgba(0, 0, 0, 0.9),
+                0 0 90px rgba(212, 175, 55, 0.6);
+        }
+        .yellow-team .click-feedback { 
+            color: #000; 
+            text-shadow: 
+                0 0 30px rgba(255, 255, 255, 1),
+                0 0 60px rgba(255, 255, 255, 0.9),
+                0 0 90px rgba(0, 0, 0, 0.6);
+        }
+        @keyframes feedbackPulse {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+            30% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+            70% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(212, 175, 55, 0.6);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            z-index: 25;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #000;
+            font-family: 'Anton', Arial, sans-serif;
+            font-size: 12px;
+            font-style: italic;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Responsive Design for Winner Display */
+        @media (max-width: 800px) {
+            .winner-display {
+                padding: 40px 50px;
+                min-width: 90vw;
+                gap: 25px;
+            }
+
+            .winner-trophy { font-size: 80px; }
+
+            .winner-details {
+                min-width: 300px;
+                padding: 20px;
+            }
+
+            .winner-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .close-winner, .share-winner {
+                padding: 15px 25px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .winner-display {
+                padding: 30px 25px;
+                min-width: 95vw;
+                gap: 20px;
+            }
+
+            .winner-trophy { font-size: 60px; }
+
+            .winner-details {
+                min-width: 250px;
+                padding: 15px;
+            }
+        }
+
+        /* Standard Responsive Design */
+        @media (max-width: 1400px) {
+            .score-main { font-size: clamp(100px, 12vw, 220px); }
+            .team-games { font-size: clamp(30px, 4vw, 60px); }
+            .vs-divider { width: 100px; height: 100px; }
+            .vs-text { font-size: 30px; }
+        }
+
+        @media (max-width: 1200px) {
+            .score-main { font-size: clamp(80px, 10vw, 180px); }
+            .team-games { font-size: clamp(25px, 3vw, 50px); }
+            .team-name { font-size: 24px; }
+            .tournament-title { font-size: 16px; }
+            .logo { width: 50px; height: 50px; }
+        }
+
+        @media (max-width: 800px) {
+            .header {
+                height: 60px;
+                padding: 0 20px;
+            }
+            .time-display { font-size: 24px; }
+            .score-main { font-size: clamp(60px, 8vw, 120px); }
+            .team-games { font-size: clamp(20px, 2.5vw, 40px); }
+            .vs-divider { width: 80px; height: 80px; }
+            .vs-text { font-size: 20px; }
+            .sets-score {
+                bottom: 20px;
+                padding: 15px 25px;
+            }
+            .sets-score-number { font-size: 28px; }
+            .team-header { padding: 0 30px; }
+            .team-label { min-width: 200px; padding: 10px 30px; }
+            .team-name { font-size: 20px; }
+            .control-panel { right: 10px; }
+            .logo { width: 45px; height: 45px; }
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 0 15px; }
+            .tournament-title { font-size: 14px; }
+            .time-display { font-size: 20px; }
+            .score-main { font-size: clamp(40px, 6vw, 80px); }
+            .team-games { font-size: clamp(15px, 2vw, 30px); }
+            .team-header { padding: 0 20px; }
+            .team-label { min-width: 150px; padding: 8px 20px; }
+            .team-name { font-size: 16px; }
+            .logo { width: 40px; height: 40px; }
+            .logo-text { font-size: 12px; }
+            .logo-container {
+                gap: 10px;
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scoreboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="tournament-info">
+                <div class="tournament-title">ALMUS SCORE COUNTING X AREMAGYM</div>
+            </div>
+            <div class="time-display" id="timeDisplay">19H22</div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <div class="live-text">LIVE</div>
+            </div>
+            <div class="logo-container">
+                <div class="logo" id="logoClick">
+                    <img src="logo.png" alt="Logo" class="logo-img" id="logoImg">
+                    <div class="logo-fallback">A</div>
+                </div>
+                <div class="logo-text">ALTUS<br>PADEL</div>
+            </div>
+        </div>
+
+        <!-- Main Scoreboard -->
+        <div class="main-scoreboard">
+            <!-- Black Team -->
+            <div class="team-section black-team" onclick="addPoint('black')">
+                <div class="team-header">
+                    <div class="team-label">
+                        <div class="team-name">BLACK TEAM</div>
+                        <div class="team-circle black-circle"></div>
+                    </div>
+                </div>
+                <div class="score-container">
+                    <div class="score-main" id="score1">0</div>
+                    <div class="team-games" id="games1">0</div>
+                </div>
+            </div>
+
+            <!-- Yellow Team -->
+            <div class="team-section yellow-team" onclick="addPoint('yellow')">
+                <div class="team-header">
+                    <div class="team-label">
+                        <div class="team-name">YELLOW TEAM</div>
+                        <div class="team-circle yellow-circle"></div>
+                    </div>
+                </div>
+                <div class="score-container">
+                    <div class="score-main" id="score2">0</div>
+                    <div class="team-games" id="games2">0</div>
+                </div>
+            </div>
+
+            <!-- VS Divider -->
+            <div class="vs-divider">
+                <div class="vs-text">VS</div>
+            </div>
+        </div>
+
+        <!-- Sets Score Panel -->
+        <div class="sets-score">
+            <div class="sets-label">SETS</div>
+            <div class="sets-scores">
+                <div class="sets-score-number" id="sets1">0</div>
+                <div class="sets-score-number" id="sets2">0</div>
+            </div>
+        </div>
+
+        <!-- ENHANCED: Bigger and Better Winner Display -->
+        <div class="winner-display" id="winnerDisplay">
+            <div class="winner-trophy">🏆</div>
+            <div class="winner-title">CHAMPION</div>
+            <div class="winner-team" id="winnerTeam">BLACK TEAM</div>
+
+            <div class="winner-details">
+                <div class="winner-score" id="winnerScore">Won 2-1 (6-4, 4-6, 6-3)</div>
+                <div class="winner-stats" id="winnerStats">Match Duration: 45 minutes<br>Total Points: 28</div>
+            </div>
+
+            <div class="winner-buttons">
+                <button class="close-winner" onclick="closeWinner()">NEW MATCH</button>
+                <button class="share-winner" onclick="shareResult()">SHARE</button>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <button class="control-btn" onclick="resetMatch()">Reset Match</button>
+            <button class="control-btn" onclick="undoLastPoint()">Undo</button>
+            <button class="control-btn" onclick="fetchGameState()">Sync</button>
+            <button class="control-btn" onclick="showHistory()">History</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let score_1 = 0;
+        let score_2 = 0;
+        let games_1 = 0;
+        let games_2 = 0;
+        let sets_1 = 0;
+        let sets_2 = 0;
+        let time = "19H22";
+        let lastAction = null;
+        let matchWon = false;
+        let winnerData = null;
+
+        // API base URL
+        const API_BASE = window.location.origin;
+
+        // Enhanced logo setup with proper image handling
+        function setupLogo() {
+            const logo = document.getElementById('logoClick');
+            const logoImg = document.getElementById('logoImg');
+
+            logoImg.onload = function() {
+                console.log('✅ Logo image (logo.png) loaded successfully');
+                logo.classList.remove('no-image');
+            };
+
+            logoImg.onerror = function() {
+                console.log('⚠️ Logo image (logo.png) failed to load, using fallback');
+                logo.classList.add('no-image');
+            };
+
+            // Force check if image is already cached
+            if (logoImg.complete) {
+                if (logoImg.naturalWidth === 0) {
+                    logoImg.onerror();
+                } else {
+                    logoImg.onload();
+                }
+            }
+        }
+
+        // Fetch initial game state from backend
+        async function fetchGameState() {
+            try {
+                const response = await fetch(`${API_BASE}/game_state`);
+                const data = await response.json();
+
+                score_1 = data.score_1;
+                score_2 = data.score_2;
+                games_1 = data.game_1;
+                games_2 = data.game_2;
+                sets_1 = data.set_1 || 0;
+                sets_2 = data.set_2 || 0;
+                matchWon = data.match_won || false;
+                winnerData = data.winner || null;
+
+                updateScoreboard();
+
+                if (matchWon && winnerData) {
+                    showWinner(winnerData);
+                }
+
+                console.log('Game state synced:', data);
+            } catch (error) {
+                console.log('Running in offline mode');
+            }
+        }
+
+        // Update display with games in team areas, sets in bottom panel
+        function updateScoreboard() {
+            document.getElementById('score1').textContent = score_1;
+            document.getElementById('score2').textContent = score_2;
+            document.getElementById('games1').textContent = games_1;  // Games in team areas
+            document.getElementById('games2').textContent = games_2;  // Games in team areas
+            document.getElementById('sets1').textContent = sets_1;    // Sets in bottom panel (RED)
+            document.getElementById('sets2').textContent = sets_2;    // Sets in bottom panel (RED)
+            document.getElementById('timeDisplay').textContent = time;
+        }
+
+        // Show enhanced click feedback
+        function showClickFeedback(team) {
+            if (matchWon) return; // Don't add points if match is won
+
+            const teamElement = document.querySelector(`.${team}-team`);
+            const feedback = document.createElement('div');
+            feedback.className = 'click-feedback';
+            feedback.textContent = '+1';
+            teamElement.appendChild(feedback);
+
+            setTimeout(() => {
+                if (teamElement.contains(feedback)) {
+                    teamElement.removeChild(feedback);
+                }
+            }, 800);
+        }
+
+        // ENHANCED: Show bigger and better winner display
+        function showWinner(winner) {
+            const winnerDisplay = document.getElementById('winnerDisplay');
+            const winnerTeam = document.getElementById('winnerTeam');
+            const winnerScore = document.getElementById('winnerScore');
+            const winnerStats = document.getElementById('winnerStats');
+
+            winnerTeam.textContent = winner.team_name;
+            winnerScore.textContent = `Won ${winner.final_sets} (${winner.match_summary})`;
+
+            // Enhanced stats display
+            const duration = winner.match_duration || 'Unknown';
+            const totalPoints = (score_1 === 0 && score_2 === 0) ? 'Match completed' : `Points: ${score_1}-${score_2}`;
+            winnerStats.innerHTML = `Match Duration: ${duration}<br>${totalPoints}`;
+
+            winnerDisplay.style.display = 'flex';
+            matchWon = true;
+        }
+
+        // Close winner display
+        function closeWinner() {
+            document.getElementById('winnerDisplay').style.display = 'none';
+            resetMatch();
+        }
+
+        // NEW: Share result function
+        function shareResult() {
+            if (!winnerData) return;
+
+            const shareText = `🏆 ${winnerData.team_name} wins! Final score: ${winnerData.final_sets} - Padel Championship`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Padel Match Result',
+                    text: shareText,
+                    url: window.location.href
+                });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText);
+                alert('Match result copied to clipboard!');
+            } else {
+                alert(shareText);
+            }
+        }
+
+        // Show match history
+        async function showHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/match_history`);
+                const data = await response.json();
+
+                if (data.detailed_history && data.detailed_history.length > 0) {
+                    const historyWindow = window.open('', '_blank', 'width=800,height=600');
+                    historyWindow.document.write(`
+                        <html>
+                        <head><title>Match History</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                            .header { background: #d4af37; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+                            .history-item { background: white; margin: 5px 0; padding: 10px; border-radius: 5px; border-left: 4px solid #d4af37; }
+                            .stats { background: white; padding: 15px; margin: 20px 0; border-radius: 8px; }
+                        </style>
+                        </head>
+                        <body>
+                        <div class="header">
+                            <h1>Padel Match History</h1>
+                            <p>Duration: ${data.match_info.duration || 'In progress'}</p>
+                            ${data.match_info.winner ? `<p>Winner: ${data.match_info.winner.team_name}</p>` : ''}
+                        </div>
+                        <div class="stats">
+                            <h3>Match Statistics</h3>
+                            <p>Black Team: ${data.statistics.black_team_stats.points_won} points, ${data.statistics.black_team_stats.games_won} games, ${data.statistics.black_team_stats.sets_won} sets</p>
+                            <p>Yellow Team: ${data.statistics.yellow_team_stats.points_won} points, ${data.statistics.yellow_team_stats.games_won} games, ${data.statistics.yellow_team_stats.sets_won} sets</p>
+                        </div>
+                        <h3>Point-by-Point History:</h3>
+                        ${data.detailed_history.map((entry, index) => `
+                            <div class="history-item">
+                                <strong>${index + 1}.</strong> 
+                                [${new Date(entry.timestamp).toLocaleTimeString()}] 
+                                ${entry.team === 'black' ? 'BLACK TEAM' : 'YELLOW TEAM'} wins ${entry.action}
+                                ${entry.action === 'point' ? ` - Score: ${entry.scores.after.score_1}-${entry.scores.after.score_2}` : ''}
+                                ${entry.action === 'game' ? ` - Games: ${entry.games.after.game_1}-${entry.games.after.game_2}` : ''}
+                                ${entry.action === 'set' ? ` - Sets: ${entry.sets.after.set_1}-${entry.sets.after.set_2}` : ''}
+                                ${entry.action === 'match' ? ' 🏆' : ''}
+                            </div>
+                        `).join('')}
+                        </body>
+                        </html>
+                    `);
+                } else {
+                    alert('No match history available yet. Start playing to generate history!');
+                }
+            } catch (error) {
+                alert('Unable to fetch match history. Make sure the backend is running.');
+            }
+        }
+
+        // Send point to backend
+        async function sendPointToBackend(team) {
+            try {
+                const response = await fetch(`${API_BASE}/add_point`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ team: team })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Point added successfully:', data);
+
+                    // Check if match is won
+                    if (data.match_won) {
+                        showWinner(data.winner);
+                    }
+
+                    return true;
+                }
+            } catch (error) {
+                console.log('Backend unavailable, using local mode');
+                return false;
+            }
+        }
+
+        // Add point function with backend integration
+        async function addPoint(team) {
+            if (matchWon) {
+                alert('Match is finished! Start a new match.');
+                return;
+            }
+
+            showClickFeedback(team);
+
+            // Store last action for undo
+            lastAction = {
+                team: team,
+                prevScore1: score_1,
+                prevScore2: score_2,
+                prevGames1: games_1,
+                prevGames2: games_2,
+                prevSets1: sets_1,
+                prevSets2: sets_2
+            };
+
+            // Try to send to backend first
+            const backendSuccess = await sendPointToBackend(team);
+
+            if (backendSuccess) {
+                // If backend successful, fetch updated state
+                await fetchGameState();
+            } else {
+                // If backend unavailable, use local logic
+                if (team === 'black') {
+                    score_1 = nextTennisScore(score_1);
+                    if (score_1 === 0) {
+                        games_1++;
+                        score_2 = 0;
+                        checkSetWin('black');
+                    }
+                } else if (team === 'yellow') {
+                    score_2 = nextTennisScore(score_2);
+                    if (score_2 === 0) {
+                        games_2++;
+                        score_1 = 0;
+                        checkSetWin('yellow');
+                    }
+                }
+                updateScoreboard();
+            }
+        }
+
+        // Check if set is won (local mode)
+        function checkSetWin(team) {
+            if (team === 'black' && games_1 >= 6 && games_1 - games_2 >= 2) {
+                sets_1++;
+                games_1 = 0;
+                games_2 = 0;
+                checkMatchWin('black');
+            } else if (team === 'yellow' && games_2 >= 6 && games_2 - games_1 >= 2) {
+                sets_2++;
+                games_1 = 0;
+                games_2 = 0;
+                checkMatchWin('yellow');
+            }
+        }
+
+        // Check if match is won (local mode)
+        function checkMatchWin(team) {
+            if ((team === 'black' && sets_1 >= 2) || (team === 'yellow' && sets_2 >= 2)) {
+                const winner = {
+                    team_name: team === 'black' ? 'BLACK TEAM' : 'YELLOW TEAM',
+                    final_sets: `${sets_1}-${sets_2}`,
+                    match_summary: 'Match completed locally',
+                    match_duration: 'Local match'
+                };
+                winnerData = winner;
+                showWinner(winner);
+            }
+        }
+
+        // Tennis scoring logic
+        function nextTennisScore(current) {
+            switch(current) {
+                case 0: return 15;
+                case 15: return 30;
+                case 30: return 40;
+                case 40: return 0;
+                default: return 0;
+            }
+        }
+
+        // Reset match
+        async function resetMatch() {
+            if (confirm('Reset the entire match?')) {
+                try {
+                    const response = await fetch(`${API_BASE}/reset_match`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (response.ok) {
+                        await fetchGameState();
+                    }
+                } catch (error) {
+                    // Local reset if backend unavailable
+                    score_1 = 0;
+                    score_2 = 0;
+                    games_1 = 0;
+                    games_2 = 0;
+                    sets_1 = 0;
+                    sets_2 = 0;
+                    matchWon = false;
+                    winnerData = null;
+                    updateScoreboard();
+                }
+
+                document.getElementById('winnerDisplay').style.display = 'none';
+            }
+        }
+
+        // Undo last point
+        function undoLastPoint() {
+            if (matchWon) {
+                alert('Cannot undo after match is finished!');
+                return;
+            }
+
+            if (lastAction) {
+                score_1 = lastAction.prevScore1;
+                score_2 = lastAction.prevScore2;
+                games_1 = lastAction.prevGames1;
+                games_2 = lastAction.prevGames2;
+                sets_1 = lastAction.prevSets1;
+                sets_2 = lastAction.prevSets2;
+                updateScoreboard();
+                lastAction = null;
+                console.log('Last point undone');
+            }
+        }
+
+        // Enhanced logo click with rotation effect
+        document.getElementById('logoClick').addEventListener('click', function() {
+            this.style.transform = 'scale(0.9) rotate(360deg)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1) rotate(0deg)';
+            }, 400);
+        });
+
+        // Initialize scoreboard
+        document.addEventListener('DOMContentLoaded', function() {
+            setupLogo();
+            fetchGameState();
+            updateScoreboard();
+        });
+
+        // Auto-update time
+        setInterval(() => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            time = `${hours}H${minutes}`;
+            updateScoreboard();
+        }, 60000);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (matchWon) return; // Disable shortcuts when match is finished
+
+            switch(e.key) {
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    addPoint('black');
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    addPoint('yellow');
+                    break;
+                case 'r':
+                case 'R':
+                    resetMatch();
+                    break;
+                case 'u':
+                case 'U':
+                    undoLastPoint();
+                    break;
+                case 's':
+                case 'S':
+                    fetchGameState();
+                    break;
+                case 'h':
+                case 'H':
+                    showHistory();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
