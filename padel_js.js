@@ -286,8 +286,7 @@
 
         // Add point with simplified tracking
         async function addPoint(team) {
-            if (matchWon) {
-                alert('Match is finished! Start a new match.');
+            if (matchWon) { 
                 return;
             }
 
